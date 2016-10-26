@@ -17,7 +17,70 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
+    
+    UIPageControl *pageControl = [UIPageControl appearance];
+    pageControl.pageIndicatorTintColor = [UIColor lightGrayColor];
+    pageControl.currentPageIndicatorTintColor = [UIColor whiteColor];
+    pageControl.backgroundColor = [UIColor clearColor];
+       
+    self.PushbotsClient = [[Pushbots alloc] initWithAppId:@"57b792c44a9efab6fe8b4567" prompt:YES];
+    [self.PushbotsClient trackPushNotificationOpenedWithLaunchOptions:launchOptions];
+    
+    NSDictionary *userInfo = [launchOptions objectForKey:UIApplicationLaunchOptionsRemoteNotificationKey];
+    if (userInfo) {
+        
+        //Capture notification data e.g. badge, alert and sound
+        NSDictionary *aps = [userInfo objectForKey:@"aps"];
+        
+        if (aps) {
+                      
+            NSString *alertMsg = [aps objectForKey:@"alert"];
+            NSLog(@"Notification message: %@", alertMsg);
+            
+            
+        }
+        
+        //Capture custom fields
+        NSString* articleId = [userInfo objectForKey:@"articleId"];
+        
+        
+        
+        
+    }
     return YES;
+}
+- (void)application:(UIApplication *)application
+didReceiveRemoteNotification:(NSDictionary *)userInfo  fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))handler {
+    // .. Process notification data
+    handler(UIBackgroundFetchResultNewData);
+}
+
+- (void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
+{
+    //Track notification only if the application opened from Background by clicking on the notification.
+    if (application.applicationState == UIApplicationStateInactive) {
+        [self.PushbotsClient trackPushNotificationOpenedWithPayload:userInfo];
+    }
+    
+    //The application was already active when the user got the notification, just show an alert.
+    //That should *not* be considered open from Push.
+    if (application.applicationState == UIApplicationStateActive) {
+        NSDictionary *notificationDict = [userInfo objectForKey:@"aps"];
+        NSString *alertString = [notificationDict objectForKey:@"alert"];
+        UIAlertView *alert = [[UIAlertView alloc]
+                              initWithTitle:@"Push Notification Received" message:alertString delegate:self
+                              cancelButtonTitle:@"Cancel" otherButtonTitles:@"Ok", nil];
+        [alert show];
+    }
+}
+
+- (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken {
+    // Register the deviceToken on Pushbots
+    [self.PushbotsClient registerOnPushbots:deviceToken];
+}
+
+-(void)application:(UIApplication *)application didFailToRegisterForRemoteNotificationsWithError:(NSError *)error{
+    NSLog(@"Notification Registration Error %@", [error description]);
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {
@@ -32,10 +95,14 @@
 
 - (void)applicationWillEnterForeground:(UIApplication *)application {
     // Called as part of the transition from the background to the inactive state; here you can undo many of the changes made on entering the background.
+    
+    [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
 }
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
+    
+    [UIApplication sharedApplication].applicationIconBadgeNumber = 0;
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {

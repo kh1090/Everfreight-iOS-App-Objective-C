@@ -9,6 +9,10 @@
 #import <UIKit/UIKit.h>
 
 @interface ViewController : UIViewController
+@property (weak, nonatomic) IBOutlet UIButton *btnCarrier;
+@property (weak, nonatomic) IBOutlet UIButton *btnDriver;
+@property (weak, nonatomic) IBOutlet UIButton *btnShipper;
+@property (weak, nonatomic) IBOutlet UIBarButtonItem *sidebarButton;
 
 
 @end
